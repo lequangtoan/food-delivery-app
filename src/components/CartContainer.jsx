@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { MdOutlineKeyboardBackspace } from "react-icons/md";
 import { RiRefreshFill } from "react-icons/ri";
 
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { app } from "../firebase.config";
+
 import { motion } from "framer-motion";
 import { useStateValue } from "../context/StateProvider";
 import { actionType } from "../context/reducer";
@@ -9,9 +12,28 @@ import EmptyCart from "../img/emptyCart.svg";
 import CartItem from "./CartItem";
 
 const CartContainer = () => {
+  const firebaseAuth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+  const [isMenu, setIsMenu] = useState(false);
+
   const [{ cartShow, cartItems, user }, dispatch] = useStateValue();
   const [flag, setFlag] = useState(1);
   const [tot, setTot] = useState(0);
+
+  const login = async () => {
+    if (!user) {
+      const {
+        user: { refreshToken, providerData },
+      } = await signInWithPopup(firebaseAuth, provider);
+      dispatch({
+        type: actionType.SET_USER,
+        user: providerData[0],
+      });
+      localStorage.setItem("user", JSON.stringify(providerData[0]));
+    } else {
+      setIsMenu(!isMenu);
+    }
+  };
 
   const showCart = () => {
     dispatch({
@@ -110,6 +132,7 @@ const CartContainer = () => {
                 whileTap={{ scale: 0.8 }}
                 type="button"
                 className="w-full p-2 rounded-full bg-gradient-to-tr from-orange-400 to-orange-600 text-gray-50 text-lg my-2 hover:shadow-lg"
+                onClick={login}
               >
                 Login to check out
               </motion.button>
